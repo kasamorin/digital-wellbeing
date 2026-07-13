@@ -1,0 +1,16 @@
+# Build artifacts
+build/
+digital-wellbeing
+
+# Editor
+*.swp
+*.swo
+*~
+.vscode/
+
+# Packaging
+pkg/
+*.tar.gz
+
+# These are also tracked in ~/.claude/
+.claude/

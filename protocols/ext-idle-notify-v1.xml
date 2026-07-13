@@ -1,0 +1,90 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<protocol name="ext_idle_notify_v1">
+
+  <copyright>
+    Copyright © 2015 Martin Gräßlin
+    Copyright © 2019-2025 Wayland contributors
+
+    Permission is hereby granted, free of charge, to any person obtaining a
+    copy of this software and associated documentation files (the "Software"),
+    to deal in the Software without restriction, including without limitation
+    the rights to use, copy, modify, merge, publish, distribute, sublicense,
+    and/or sell copies of the Software, and to permit persons to whom the
+    Software is furnished to do so, subject to the following conditions:
+
+    The above copyright notice and this permission notice (including the next
+    paragraph) shall be included in all copies or substantial portions of the
+    Software.
+
+    THE SOFTWARE IS PROVIDED "AS IS", WITHOUT WARRANTY OF ANY KIND, EXPRESS OR
+    IMPLIED, INCLUDING BUT NOT LIMITED TO THE WARRANTIES OF MERCHANTABILITY,
+    FITNESS FOR A PARTICULAR PURPOSE AND NONINFRINGEMENT. IN NO EVENT SHALL
+    THE AUTHORS OR COPYRIGHT HOLDERS BE LIABLE FOR ANY CLAIM, DAMAGES OR OTHER
+    LIABILITY, WHETHER IN AN ACTION OF CONTRACT, TORT OR OTHERWISE, ARISING
+    FROM, OUT OF OR IN CONNECTION WITH THE SOFTWARE OR THE USE OR OTHER
+    DEALINGS IN THE SOFTWARE.
+  </copyright>
+
+  <description summary="idle notification protocol">
+    This protocol allows clients to be notified when the user is idle for
+    a given amount of time.
+
+    A compositor may not support idle notifications at all, in which case
+    the global will not be advertised.
+
+    Warning! The protocol described in this file is currently in the
+    staging phase. Backward compatible changes may be added together with
+    the corresponding interface version bump. Backward incompatible changes
+    can only be done by creating a new major version of the extension.
+  </description>
+
+  <interface name="ext_idle_notifier_v1" version="1">
+    <description summary="idle notification manager">
+      This interface allows a client to get notified when the user is idle.
+    </description>
+
+    <request name="destroy" type="destructor">
+      <description summary="destroy the idle notifier object" />
+    </request>
+
+    <request name="get_idle_notification">
+      <description summary="create an idle notification object">
+        This creates an idle notification with the given timeout. After
+        the client has been idle for the specified amount of time, the
+        compositor will send the idled event to the notification object.
+        When the user becomes active again, the resumed event is sent.
+
+        The notification object remains valid until the client destroys it,
+        or the compositor cancels the notification (e.g., screen locks).
+        The compositor may resume notifications after screen unlock.
+
+        The timeout is given in milliseconds with a minimum of 100 ms.
+      </description>
+      <arg name="id" type="new_id" interface="ext_idle_notification_v1" />
+      <arg name="timeout" type="uint" summary="minimum idle time in ms" />
+    </request>
+  </interface>
+
+  <interface name="ext_idle_notification_v1" version="1">
+    <description summary="idle notification object">
+      An idle notification object created by the idle notifier.
+    </description>
+
+    <request name="destroy" type="destructor">
+      <description summary="destroy the notification object" />
+    </request>
+
+    <event name="idled">
+      <description summary="the user is now idle">
+        This event is sent when the user has been idle for the time
+        specified when creating the notification object.
+      </description>
+    </event>
+
+    <event name="resumed">
+      <description summary="the user is active again">
+        This event is sent when the user is no longer idle.
+      </description>
+    </event>
+  </interface>
+</protocol>

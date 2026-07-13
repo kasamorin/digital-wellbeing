@@ -9,7 +9,7 @@ WAYLAND_SCANNER := $(shell which wayland-scanner 2>/dev/null)
 WAYLAND_PROTOCOLS_DIR := $(shell pkg-config --variable=pkgdatadir wayland-protocols 2>/dev/null)
 
 # pkg-config dependencies
-PKGS     := json-c dbus-1 xscrnsaver
+PKGS     := json-c dbus-1 xscrnsaver x11 xext
 PKGS_WL  := wayland-client
 
 CFLAGS   += $(shell pkg-config --cflags $(PKGS))
@@ -23,7 +23,8 @@ BUILDDIR := build
 PROTODIR := protocols
 
 SOURCES  := $(wildcard $(SRCDIR)/*.c)
-OBJECTS  := $(patsubst $(SRCDIR)/%.c,$(BUILDDIR)/%.o,$(SOURCES))
+BASE_OBJECTS := $(patsubst $(SRCDIR)/%.c,$(BUILDDIR)/%.o,$(SOURCES))
+OBJECTS  = $(BASE_OBJECTS) $(if $(HAVE_WL_PROTO),$(BUILDDIR)/ext-idle-notify-v1.o)
 
 # Wayland protocol codegen (skipped if wayland-scanner not available)
 WL_PROTO_XML := $(PROTODIR)/ext-idle-notify-v1.xml
@@ -40,6 +41,7 @@ endif
 
 # Wayland client lib — only link if protocol codegen is present
 ifeq ($(HAVE_WL_PROTO),1)
+  CFLAGS += -I$(BUILDDIR)
   CFLAGS += $(shell pkg-config --cflags $(PKGS_WL))
   LDFLAGS += $(shell pkg-config --libs $(PKGS_WL))
   CFLAGS += -DHAVE_WAYLAND
@@ -56,6 +58,9 @@ dirs:
 $(WL_PROTO_C) $(WL_PROTO_H): $(WL_PROTO_XML)
 	$(WAYLAND_SCANNER) client-header < $< > $(WL_PROTO_H)
 	$(WAYLAND_SCANNER) public-code < $< > $(WL_PROTO_C)
+
+$(BUILDDIR)/ext-idle-notify-v1.o: $(WL_PROTO_C) $(WL_PROTO_H)
+	$(CC) $(CFLAGS) -c $(WL_PROTO_C) -o $@
 
 $(BUILDDIR)/%.o: $(SRCDIR)/%.c $(WL_CODEGEN)
 	$(CC) $(CFLAGS) -c $< -o $@
