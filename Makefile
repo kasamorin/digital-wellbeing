@@ -16,11 +16,7 @@ CFLAGS   += $(shell pkg-config --cflags $(PKGS))
 LDFLAGS  += $(shell pkg-config --libs $(PKGS))
 
 # Wayland is optional at build time (runtime detection handles it)
-ifneq ($(WAYLAND_PROTOCOLS_DIR),)
-  CFLAGS += $(shell pkg-config --cflags $(PKGS_WL))
-  LDFLAGS += $(shell pkg-config --libs $(PKGS_WL))
-  CFLAGS += -DHAVE_WAYLAND
-endif
+# Only link Wayland when protocol XML is present (Phase 3+)
 
 SRCDIR   := src
 BUILDDIR := build
@@ -29,13 +25,24 @@ PROTODIR := protocols
 SOURCES  := $(wildcard $(SRCDIR)/*.c)
 OBJECTS  := $(patsubst $(SRCDIR)/%.c,$(BUILDDIR)/%.o,$(SOURCES))
 
-# Wayland protocol codegen
+# Wayland protocol codegen (skipped if wayland-scanner not available)
 WL_PROTO_XML := $(PROTODIR)/ext-idle-notify-v1.xml
 WL_PROTO_C   := $(BUILDDIR)/ext-idle-notify-v1.c
 WL_PROTO_H   := $(BUILDDIR)/ext-idle-notify-v1.h
 
+# Only add codegen targets if the XML file exists (Phase 3+)
+ifneq ($(wildcard $(WL_PROTO_XML)),)
 ifneq ($(WAYLAND_SCANNER),)
   WL_CODEGEN := $(WL_PROTO_C) $(WL_PROTO_H)
+  HAVE_WL_PROTO := 1
+endif
+endif
+
+# Wayland client lib — only link if protocol codegen is present
+ifeq ($(HAVE_WL_PROTO),1)
+  CFLAGS += $(shell pkg-config --cflags $(PKGS_WL))
+  LDFLAGS += $(shell pkg-config --libs $(PKGS_WL))
+  CFLAGS += -DHAVE_WAYLAND
 endif
 
 TARGET   := digital-wellbeing
