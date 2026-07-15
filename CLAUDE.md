@@ -6,56 +6,72 @@ This file provides guidance to Claude Code (claude.ai/code) when working with co
 
 ```bash
 make clean && make          # full rebuild with warnings (-Wall -Wextra -Wpedantic)
-./digital-wellbeing         # test run (currently dumps config + 5s idle poll)
-```
-
-Other useful commands:
-```bash
-loginctl user-status                        # session info, idle hints
-wayland-info                                # list compositor globals (Wayland)
-gdbus introspect --session --dest org.kde.KWin --object-path /ScreenSaver  # KWin screen saver API
+./digital-wellbeing         # run daemon (forks, installs systemd service on first run)
+systemctl --user status digital-wellbeing   # check daemon status
+journalctl --user -u digital-wellbeing -f   # follow daemon logs
 ```
 
 ## Architecture
 
-C23 (GNU23) daemon for Arch Linux. Single binary with two modes:
-- **Daemon mode** (default): systemd user unit, forks off, runs the pomodoro-like state machine
-- **CLI mode** (`status` / `today`): talks to the daemon over a Unix socket at `~/.cache/digital-wellbeing.sock`
+C + C++ hybrid daemon for Arch Linux. Single binary, KISS design:
 
-Config is JSON at `~/.config/digital-wellbeing/config.json`, auto-generated on first run via `json-c`.
+- **Daemon mode** (default): forks off, runs the pomodoro loop
+- **First run**: writes `~/.config/systemd/user/digital-wellbeing.service` and enables it
+- Config is JSON at `~/.config/digital-wellbeing/config.json`, auto-generated on first run via `json-c`
 
-### State machine
+### Main loop (src/main.cpp)
 
 ```
-WORKING(25min) → NOTIFIED → MONITORING(3min, 30s idle threshold) → LOCKED(5min) → WORKING
+sleep(workMinutes - 5)  →  notify-send "5 minutes until break"  →
+sleep(5)                →  breakWindowShow(breakMinutes)        →  loop
 ```
 
-If user unlocks during LOCKED, notification spam (default 3-5s interval) or persistent notification fires until the 5 minutes elapse.
+Signal handling: SIGTERM/SIGINT set `volatile sig_atomic_t gRunning = 0`, loop exits cleanly.
 
-### Idle detection: dual backend, runtime-select
+### Break window (src/breakWindow.cpp)
 
-`src/idle.c` picks backend via `$XDG_SESSION_TYPE`:
-- **X11**: `XScreenSaverQueryInfo` — works reliably
-- **Wayland**: `ext-idle-notify-v1` protocol XML vendored in `protocols/`, compiled with `wayland-scanner`
-  - **⚠ Known issue**: KWin (Plasma 6) does NOT advertise `ext_idle_notifier_v1` in its globals. So the Wayland backend will fail to init on KDE. Resolution TBD.
+Qt6 fullscreen overlay (`Qt::WindowStaysOnTopHint`), Breeze-themed on KDE:
 
-### Lock screen: desktop-aware matching
+- Large countdown label (96pt), `MM:SS` format
+- "Skip Break" button below
+- Ctrl+Q shortcut (same effect as button)
+- Notify-send at 5min remaining (once per break)
+- Blocks via QEventLoop until dismissed, then returns control to the daemon loop
 
-`src/lock.c` (not yet implemented) will identify the DE (`$XDG_CURRENT_DESKTOP`, process scan) and pick the right lock method from a lookup table. Unknown DEs fall back through loginctl → D-Bus → user-configurable command → +20s monitoring grace.
+No moc needed — no `Q_OBJECT` macro, signals connected via function pointers.
+
+### Config (src/config.c/h)
+
+Only two fields:
+```json
+{
+  "workMinutes": 25,
+  "breakMinutes": 5
+}
+```
+
+### Service self-install (src/service.c/h)
+
+On first run, writes a built-in systemd user unit to `~/.config/systemd/user/digital-wellbeing.service` and runs `systemctl --user enable`. Skips if file exists.
 
 ### Build flags
 
-- `pkg-config` pulls in: `json-c`, `dbus-1`, `xscrnsaver`, `x11`, `xext`
-- Wayland is conditional: only linked when `protocols/ext-idle-notify-v1.xml` exists and `wayland-scanner` is present. Defines `HAVE_WAYLAND` preprocessor macro.
-- `wayland-protocols` package is a build-time dep for the XML protocol definitions (not yet installed on the dev machine)
+| component | pkg-config |
+|-----------|------------|
+| config    | `json-c` |
+| break window + main loop | `Qt6Widgets Qt6Gui Qt6Core` |
 
-## Current status (2026-07-13)
+C files compiled with `gcc -std=gnu23`, C++ files with `g++ -std=c++23 -fpic` (`-fpic` required for gcc 16 + Qt6 protected symbol compatibility). Final link with `g++`.
 
-- ✅ Phase 1: clang-format, Makefile, README
-- ✅ Phase 2: JSON config (json-c), auto-generate defaults
-- 🔄 Phase 3: Idle detection — X11 backend works, Wayland code compiles but KWin doesn't implement ext-idle-notify-v1. See `PROGRESS.md` for detailed investigation log.
-- ⏳ Phase 4-8: desktop detection, lock screen, notifications, state machine daemon, CLI, PKGBUILD — pending.
+## Removed (2026-07-15 redesign)
+
+- **Idle detection** (X11 XScreenSaver, Wayland ext-idle-notify, /dev/input, D-Bus logind) — all deleted. KDE Plasma 6 Wayland had no working backend.
+- **Lock screen** and **desktop detection** — replaced by the fullscreen break window.
+- **Notification spam/persistent** — replaced by a single notify-send at 25→20min work mark + one during break at 5min remaining.
+- **State machine module** — loop is simple enough to inline in main.cpp.
+- **CLI** (Unix socket, `status`/`today`) — not needed, KISS.
+- **Wayland protocol vendoring** (`protocols/ext-idle-notify-v1.xml`) — deleted.
 
 ## Coding conventions
 
-Allman brace style, 4-space indent, 80-col, `*` binds to variable name. Enforced by `.clang-format`. MixedCase for functions. Public API in `*.h` files documented with block comments.
+Allman brace style, 4-space indent, 80-col, `*` binds to variable name. MixedCase for functions. C headers wrapped with `extern "C"` for C++ compatibility. Qt6 code follows Qt conventions (camelCase signals/slots, no `Q_OBJECT` macro needed).

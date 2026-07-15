@@ -1,26 +1,12 @@
 #ifndef CONFIG_H
 #define CONFIG_H
 
-#include <json-c/json.h>
 #include <stdint.h>
-#include <stdbool.h>
-
-typedef enum
-{
-    NOTIFY_SPAM,
-    NOTIFY_PERSISTENT
-} NotificationStrategy;
 
 typedef struct
 {
     uint32_t workMinutes;
     uint32_t breakMinutes;
-    uint32_t monitorWindowMinutes;
-    uint32_t idleThresholdSeconds;
-    char *   lockScreenCommand;
-    NotificationStrategy notificationStrategy;
-    uint32_t spamIntervalSeconds;
-    uint32_t persistentNotificationTimeout;
 } Config;
 
 /*
@@ -38,7 +24,7 @@ Config *configLoad(void);
 int configSave(const Config *cfg);
 
 /*
- * Free a Config struct and its owned strings.
+ * Free a Config struct.
  */
 void configFree(Config *cfg);
 

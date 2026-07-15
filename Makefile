@@ -1,80 +1,60 @@
 .PHONY: all clean install uninstall
 
 CC       := gcc
-CFLAGS   := -std=gnu23 -Wall -Wextra -Wpedantic
-LDFLAGS  :=
-
-# Detect session type for idle backend selection at compile time (both available)
-WAYLAND_SCANNER := $(shell which wayland-scanner 2>/dev/null)
-WAYLAND_PROTOCOLS_DIR := $(shell pkg-config --variable=pkgdatadir wayland-protocols 2>/dev/null)
+CXX      := g++
 
 # pkg-config dependencies
-PKGS     := json-c dbus-1 xscrnsaver x11 xext
-PKGS_WL  := wayland-client
+C_PKGS   := json-c
+CXX_PKGS := Qt6Widgets Qt6Gui Qt6Core
 
-CFLAGS   += $(shell pkg-config --cflags $(PKGS))
-LDFLAGS  += $(shell pkg-config --libs $(PKGS))
+# C flags: gcc, C23
+CFLAGS   := -std=gnu23 -Wall -Wextra -Wpedantic \
+            $(shell pkg-config --cflags $(C_PKGS))
 
-# Wayland is optional at build time (runtime detection handles it)
-# Only link Wayland when protocol XML is present (Phase 3+)
+# C++ flags: g++, C++23, -fpic needed for gcc 16 + Qt6 protected symbols
+CXXFLAGS := -std=c++23 -Wall -Wextra -Wpedantic -fpic \
+            $(shell pkg-config --cflags $(CXX_PKGS))
+
+# Link flags — g++ does final link, pulls in libstdc++ + Qt6
+LDFLAGS  := $(shell pkg-config --libs $(C_PKGS) $(CXX_PKGS))
 
 SRCDIR   := src
 BUILDDIR := build
-PROTODIR := protocols
 
-SOURCES  := $(wildcard $(SRCDIR)/*.c)
-BASE_OBJECTS := $(patsubst $(SRCDIR)/%.c,$(BUILDDIR)/%.o,$(SOURCES))
-OBJECTS  = $(BASE_OBJECTS) $(if $(HAVE_WL_PROTO),$(BUILDDIR)/ext-idle-notify-v1.o)
+# C sources (compiled with gcc)
+C_SOURCES := $(wildcard $(SRCDIR)/*.c)
+C_OBJECTS := $(patsubst $(SRCDIR)/%.c,$(BUILDDIR)/%.o,$(C_SOURCES))
 
-# Wayland protocol codegen (skipped if wayland-scanner not available)
-WL_PROTO_XML := $(PROTODIR)/ext-idle-notify-v1.xml
-WL_PROTO_C   := $(BUILDDIR)/ext-idle-notify-v1.c
-WL_PROTO_H   := $(BUILDDIR)/ext-idle-notify-v1.h
+# C++ sources (compiled with g++)
+CXX_SOURCES := $(wildcard $(SRCDIR)/*.cpp)
+CXX_OBJECTS := $(patsubst $(SRCDIR)/%.cpp,$(BUILDDIR)/%.o,$(CXX_SOURCES))
 
-# Only add codegen targets if the XML file exists (Phase 3+)
-ifneq ($(wildcard $(WL_PROTO_XML)),)
-ifneq ($(WAYLAND_SCANNER),)
-  WL_CODEGEN := $(WL_PROTO_C) $(WL_PROTO_H)
-  HAVE_WL_PROTO := 1
-endif
-endif
+OBJECTS := $(C_OBJECTS) $(CXX_OBJECTS)
 
-# Wayland client lib — only link if protocol codegen is present
-ifeq ($(HAVE_WL_PROTO),1)
-  CFLAGS += -I$(BUILDDIR)
-  CFLAGS += $(shell pkg-config --cflags $(PKGS_WL))
-  LDFLAGS += $(shell pkg-config --libs $(PKGS_WL))
-  CFLAGS += -DHAVE_WAYLAND
-endif
+TARGET := digital-wellbeing
 
-TARGET   := digital-wellbeing
-
-all: dirs $(WL_CODEGEN) $(TARGET)
+all: dirs $(TARGET)
 
 dirs:
 	@mkdir -p $(BUILDDIR)
 
-# Wayland protocol code generation
-$(WL_PROTO_C) $(WL_PROTO_H): $(WL_PROTO_XML)
-	$(WAYLAND_SCANNER) client-header < $< > $(WL_PROTO_H)
-	$(WAYLAND_SCANNER) public-code < $< > $(WL_PROTO_C)
-
-$(BUILDDIR)/ext-idle-notify-v1.o: $(WL_PROTO_C) $(WL_PROTO_H)
-	$(CC) $(CFLAGS) -c $(WL_PROTO_C) -o $@
-
-$(BUILDDIR)/%.o: $(SRCDIR)/%.c $(WL_CODEGEN)
+# C compile rule
+$(BUILDDIR)/%.o: $(SRCDIR)/%.c
 	$(CC) $(CFLAGS) -c $< -o $@
 
+# C++ compile rule
+$(BUILDDIR)/%.o: $(SRCDIR)/%.cpp
+	$(CXX) $(CXXFLAGS) -c $< -o $@
+
+# Link with g++ (pulls in libstdc++ + Qt6)
 $(TARGET): $(OBJECTS)
-	$(CC) $(OBJECTS) $(LDFLAGS) -o $@
+	$(CXX) $(OBJECTS) $(LDFLAGS) -o $@
 
 clean:
 	rm -rf $(BUILDDIR) $(TARGET)
 
 install: $(TARGET)
-	install -Dm755 $(TARGET) $(DESTDIR)/usr/bin/$(TARGET)
-	install -Dm644 systemd/digital-wellbeing.service $(DESTDIR)/usr/lib/systemd/user/digital-wellbeing.service
+	install -Dm755 $(TARGET) $(DESTDIR)$(HOME)/.local/bin/$(TARGET)
 
 uninstall:
-	rm -f $(DESTDIR)/usr/bin/$(TARGET)
-	rm -f $(DESTDIR)/usr/lib/systemd/user/digital-wellbeing.service
+	rm -f $(DESTDIR)$(HOME)/.local/bin/$(TARGET)
