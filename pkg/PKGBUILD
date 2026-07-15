@@ -21,21 +21,17 @@ depends=('json-c' 'qt6-base' 'libnotify')
 provides=('digital-wellbeing')
 conflicts=()
 
-# 预编译二进制和翻译文件，直接放入 pkg/ 目录
-source=(
-  "digital-wellbeing"
-  "locale/en/LC_MESSAGES/digital-wellbeing.mo"
-  "locale/zh_CN/LC_MESSAGES/digital-wellbeing.mo"
-)
-
-sha256sums=('SKIP')
+# 无远程源文件，直接从 PKGBUILD 所在目录安装预编译文件
+source=()
+sha256sums=()
 
 package() {
-  install -Dm755 "$srcdir/digital-wellbeing" \
+  # $startdir 是 PKGBUILD 所在目录
+  install -Dm755 "$startdir/digital-wellbeing" \
     "$pkgdir/usr/bin/digital-wellbeing"
 
-  install -Dm644 "$srcdir/locale/en/LC_MESSAGES/digital-wellbeing.mo" \
+  install -Dm644 "$startdir/locale/en/LC_MESSAGES/digital-wellbeing.mo" \
     "$pkgdir/usr/share/locale/en/LC_MESSAGES/digital-wellbeing.mo"
-  install -Dm644 "$srcdir/locale/zh_CN/LC_MESSAGES/digital-wellbeing.mo" \
+  install -Dm644 "$startdir/locale/zh_CN/LC_MESSAGES/digital-wellbeing.mo" \
     "$pkgdir/usr/share/locale/zh_CN/LC_MESSAGES/digital-wellbeing.mo"
 }

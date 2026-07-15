@@ -12,6 +12,9 @@ digital-wellbeing
 # Packaging
 #pkg/          # pkg/ is tracked — contains PKGBUILD and pre-built files
 *.tar.gz
+*.pkg.tar.zst
+pkg/pkg/
+pkg/src/
 
 # These are also tracked in ~/.claude/
 .claude/
