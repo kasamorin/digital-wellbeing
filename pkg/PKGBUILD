@@ -1,0 +1,41 @@
+# Maintainer: kasamorin
+#
+# 使用前先在项目根目录编译：
+#   make clean && make && make mo
+# 然后把二进制和 .mo 文件复制到 pkg/ 目录：
+#   cp digital-wellbeing pkg/
+#   mkdir -p pkg/locale/en/LC_MESSAGES pkg/locale/zh_CN/LC_MESSAGES
+#   cp ~/.local/share/locale/en/LC_MESSAGES/digital-wellbeing.mo pkg/locale/en/LC_MESSAGES/
+#   cp ~/.local/share/locale/zh_CN/LC_MESSAGES/digital-wellbeing.mo pkg/locale/zh_CN/LC_MESSAGES/
+# 最后在此目录运行 makepkg
+
+pkgname=digital-wellbeing
+_pkgver=1.0.0
+pkgver=$_pkgver
+pkgrel=1
+pkgdesc="番茄工作法休息提醒，Qt6 全屏覆盖窗口"
+arch=('x86_64')
+url=""
+license=('GPL3')
+depends=('json-c' 'qt6-base' 'libnotify')
+provides=('digital-wellbeing')
+conflicts=()
+
+# 预编译二进制和翻译文件，直接放入 pkg/ 目录
+source=(
+  "digital-wellbeing"
+  "locale/en/LC_MESSAGES/digital-wellbeing.mo"
+  "locale/zh_CN/LC_MESSAGES/digital-wellbeing.mo"
+)
+
+sha256sums=('SKIP')
+
+package() {
+  install -Dm755 "$srcdir/digital-wellbeing" \
+    "$pkgdir/usr/bin/digital-wellbeing"
+
+  install -Dm644 "$srcdir/locale/en/LC_MESSAGES/digital-wellbeing.mo" \
+    "$pkgdir/usr/share/locale/en/LC_MESSAGES/digital-wellbeing.mo"
+  install -Dm644 "$srcdir/locale/zh_CN/LC_MESSAGES/digital-wellbeing.mo" \
+    "$pkgdir/usr/share/locale/zh_CN/LC_MESSAGES/digital-wellbeing.mo"
+}

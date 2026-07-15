@@ -1,6 +1,7 @@
 # Build artifacts
 build/
 digital-wellbeing
+!pkg/digital-wellbeing
 
 # Editor
 *.swp
@@ -9,7 +10,7 @@ digital-wellbeing
 .vscode/
 
 # Packaging
-pkg/
+#pkg/          # pkg/ is tracked — contains PKGBUILD and pre-built files
 *.tar.gz
 
 # These are also tracked in ~/.claude/
