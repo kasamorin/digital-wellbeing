@@ -66,6 +66,18 @@ In foreground mode, cycle transitions are logged to stderr with timestamps:
 [14:55:00] Break completed, starting new work period
 ```
 
+## Directory layout
+
+| Path | Purpose |
+|------|---------|
+| `/usr/bin/digital-wellbeing` | Binary (PKGBUILD install) |
+| `/usr/share/locale/*/LC_MESSAGES/digital-wellbeing.mo` | gettext translations |
+| `~/.config/digital-wellbeing/config.json` | User config |
+| `~/.config/systemd/user/digital-wellbeing.service` | systemd user unit |
+
+If you install to `~/.local/bin/` instead (e.g. `make install`), edit the
+service file's `ExecStart=` line accordingly.
+
 ## Configuration
 
 `~/.config/digital-wellbeing/config.json` (auto-generated on first run):

@@ -14,9 +14,8 @@
 
 /*
  * Built-in service unit format.
- * %%h is expanded by systemd to the user's home directory.
  * The Description is translated at write time via _().
- * The binary is installed to ~/.local/bin/ per KISS: no root needed.
+ * Binary expected at /usr/bin/digital-wellbeing (PKGBUILD install).
  */
 static const char *kServiceUnitFormat =
     "[Unit]\n"
@@ -24,7 +23,7 @@ static const char *kServiceUnitFormat =
     "\n"
     "[Service]\n"
     "Type=simple\n"
-    "ExecStart=%%h/.local/bin/digital-wellbeing\n"
+    "ExecStart=/usr/bin/digital-wellbeing\n"
     "Restart=on-failure\n"
     "RestartSec=10\n"
     "\n"

@@ -66,6 +66,18 @@ digital-wellbeing --help       # 显示帮助信息
 [14:55:00] Break completed, starting new work period
 ```
 
+## 目录结构
+
+| 路径 | 用途 |
+|------|------|
+| `/usr/bin/digital-wellbeing` | 二进制文件（PKGBUILD 安装位置） |
+| `/usr/share/locale/*/LC_MESSAGES/digital-wellbeing.mo` | gettext 翻译文件 |
+| `~/.config/digital-wellbeing/config.json` | 用户配置文件 |
+| `~/.config/systemd/user/digital-wellbeing.service` | systemd 用户单元 |
+
+如果改为安装到 `~/.local/bin/`（如使用 `make install`），需自行修改
+service 文件中的 `ExecStart=` 路径。
+
 ## 配置
 
 `~/.config/digital-wellbeing/config.json`（首次运行自动生成）：
