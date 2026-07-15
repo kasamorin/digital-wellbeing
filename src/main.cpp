@@ -11,8 +11,10 @@
 
 extern "C" {
 #include "config.h"
-#include "service.h"
 #include "breakWindow.h"
+#include "service.h"
+#include "log.h"
+#include "i18n.h"
 }
 
 /* ---------- graceful shutdown ---------- */
@@ -47,8 +49,7 @@ static int daemonize(void)
     if (pid > 0)
     {
         /* Parent exits, child continues */
-        fprintf(stderr,
-            "daemon: forked child pid %d, exiting parent\n",
+        logMsg(_("daemon: forked child pid %d, exiting parent"),
             pid);
         _exit(0);
     }
@@ -103,6 +104,9 @@ static void mainLoop(const Config *cfg)
             (cfg->workMinutes > 5) ? 5u * 60u
                                    : cfg->workMinutes * 60u;
 
+        logMsg(_("Work period started — %u minutes"),
+            cfg->workMinutes);
+
         if (preNotifySec > 0)
         {
             for (uint32_t s = 0; s < preNotifySec && gRunning; s++)
@@ -117,7 +121,7 @@ static void mainLoop(const Config *cfg)
 
         if (cfg->workMinutes > 5)
         {
-            sendNotification("5 minutes until break time", 30000);
+            sendNotification(_("5 minutes until break time"), 30000);
         }
 
         for (uint32_t s = 0; s < remainingWorkSec && gRunning; s++)
@@ -129,62 +133,113 @@ static void mainLoop(const Config *cfg)
             break;
         }
 
-        breakWindowShow((int)cfg->breakMinutes * 60);
+        logMsg(_("Break period started — %u minutes"),
+            cfg->breakMinutes);
+
+        bool skipped = breakWindowShow(
+            (int)cfg->breakMinutes * 60);
+
+        if (!gRunning)
+        {
+            break;
+        }
+
+        logMsg(skipped
+            ? _("Break skipped, starting new work period")
+            : _("Break completed, starting new work period"));
     }
+}
+
+/* ---------- usage ---------- */
+static void printUsage(void)
+{
+    fprintf(stderr,
+        "Usage: digital-wellbeing [OPTION]\n"
+        "       digital-wellbeing install\n"
+        "\n"
+        "Run a pomodoro-style break reminder.\n"
+        "\n"
+        "Options:\n"
+        "  -d, --daemon    Run in background (fork and detach)\n"
+        "  -h, --help      Show this help message\n"
+        "\n"
+        "Commands:\n"
+        "  install         Install systemd user service file and exit\n");
 }
 
 /* ---------- entry point ---------- */
 int main(int argc, char *argv[])
 {
-    bool foreground = false;
+    /* ---- subcommand: install ---- */
+    if (argc > 1 && strcmp(argv[1], "install") == 0)
+    {
+        i18nInit();
+        if (serviceInstall() != 0)
+        {
+            return EXIT_FAILURE;
+        }
+        return EXIT_SUCCESS;
+    }
 
-    /* Parse KISS args */
+    /* ---- parse flags ---- */
+    bool daemonMode = false;
+
     for (int i = 1; i < argc; i++)
     {
-        if (strcmp(argv[i], "--fg") == 0
+        if (strcmp(argv[i], "--daemon") == 0
+            || strcmp(argv[i], "-d") == 0)
+        {
+            daemonMode = true;
+        }
+        else if (strcmp(argv[i], "--help") == 0
+            || strcmp(argv[i], "-h") == 0)
+        {
+            printUsage();
+            return EXIT_SUCCESS;
+        }
+        else if (strcmp(argv[i], "--fg") == 0
             || strcmp(argv[i], "-f") == 0)
         {
-            foreground = true;
+            /* Accept but warn — foreground is now the default */
+            logMsg(_("--fg/-f is deprecated; "
+                "foreground is now the default mode"));
         }
     }
 
-    /* --- config --- */
+    /* ---- i18n ---- */
+    i18nInit();
+
+    /* ---- config ---- */
     Config *cfg = configLoad();
     if (!cfg)
     {
-        fprintf(stderr, "configLoad failed\n");
+        logMsg(_("configLoad failed"));
         return EXIT_FAILURE;
     }
 
-    fprintf(stderr, "digital-wellbeing: starting daemon\n");
-    fprintf(stderr, "  work=%umin break=%umin\n",
+    logMsg(_("Starting digital-wellbeing — "
+        "%u min work, %u min break"),
         cfg->workMinutes, cfg->breakMinutes);
 
-    /* --- service self-install (first run only) --- */
-    if (serviceInstall() != 0)
-    {
-        fprintf(stderr, "serviceInstall failed (non-fatal, continuing)\n");
-    }
-
-    /* --- daemonize (unless --fg) --- */
-    if (!foreground)
+    /* ---- daemonize (only when --daemon) ---- */
+    if (daemonMode)
     {
         if (daemonize() != 0)
         {
-            fprintf(stderr, "daemonize failed\n");
+            logMsg(_("daemonize failed"));
             configFree(cfg);
             return EXIT_FAILURE;
         }
     }
 
-    /* --- init Qt (AFTER fork, so child gets a fresh QApplication) --- */
+    /* ---- init Qt (AFTER fork, so child gets fresh QApplication) ---- */
     QApplication app(argc, argv);
     QApplication::setQuitOnLastWindowClosed(false);
 
-    /* --- signals --- */
+    /* ---- signals ---- */
     installSignals();
 
-    /* --- main loop --- */
+    /* ---- main loop ---- */
     mainLoop(cfg);
 
     configFree(cfg);

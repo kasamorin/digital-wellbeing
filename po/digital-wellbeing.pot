@@ -1,0 +1,128 @@
+# SOME DESCRIPTIVE TITLE.
+# Copyright (C) YEAR THE PACKAGE'S COPYRIGHT HOLDER
+# This file is distributed under the same license as the digital-wellbeing package.
+# FIRST AUTHOR <EMAIL@ADDRESS>, YEAR.
+#
+#, fuzzy
+msgid ""
+msgstr ""
+"Project-Id-Version: digital-wellbeing\n"
+"Report-Msgid-Bugs-To: \n"
+"POT-Creation-Date: 2026-07-15 22:53+0800\n"
+"PO-Revision-Date: YEAR-MO-DA HO:MI+ZONE\n"
+"Last-Translator: FULL NAME <EMAIL@ADDRESS>\n"
+"Language-Team: LANGUAGE <LL@li.org>\n"
+"Language: \n"
+"MIME-Version: 1.0\n"
+"Content-Type: text/plain; charset=UTF-8\n"
+"Content-Transfer-Encoding: 8bit\n"
+
+#: src/config.c:92
+#, c-format
+msgid "Wrote default config to %s"
+msgstr ""
+
+#: src/config.c:118
+msgid "Failed to create config directory"
+msgstr ""
+
+#: src/config.c:125
+msgid "Failed to build config path"
+msgstr ""
+
+#: src/config.c:142
+#, c-format
+msgid "Failed to parse %s: %s"
+msgstr ""
+
+#: src/config.c:151
+msgid "Out of memory"
+msgstr ""
+
+#: src/service.c:63
+#, c-format
+msgid "Failed to create directory %s"
+msgstr ""
+
+#: src/service.c:95
+msgid "Cannot ensure service directory"
+msgstr ""
+
+#: src/service.c:102
+msgid "Cannot build service path"
+msgstr ""
+
+#: src/service.c:109
+#, c-format
+msgid "%s already exists, skipping install"
+msgstr ""
+
+#: src/service.c:123
+msgid "Digital Wellbeing — pomodoro-style break reminder"
+msgstr ""
+
+#: src/service.c:126
+#, c-format
+msgid "Installed %s"
+msgstr ""
+
+#: src/service.c:129
+msgid ""
+"Run 'systemctl --user enable digital-wellbeing.service' to start on login"
+msgstr ""
+
+#: src/breakWindow.cpp:40
+msgid "Take a break"
+msgstr ""
+
+#: src/breakWindow.cpp:56
+msgid "Skip Break"
+msgstr ""
+
+#: src/breakWindow.cpp:90
+msgid "5 minutes of break remaining"
+msgstr ""
+
+#: src/main.cpp:52
+#, c-format
+msgid "daemon: forked child pid %d, exiting parent"
+msgstr ""
+
+#: src/main.cpp:107
+#, c-format
+msgid "Work period started — %u minutes"
+msgstr ""
+
+#: src/main.cpp:124
+msgid "5 minutes until break time"
+msgstr ""
+
+#: src/main.cpp:136
+#, c-format
+msgid "Break period started — %u minutes"
+msgstr ""
+
+#: src/main.cpp:148
+msgid "Break skipped, starting new work period"
+msgstr ""
+
+#: src/main.cpp:149
+msgid "Break completed, starting new work period"
+msgstr ""
+
+#: src/main.cpp:204
+msgid "--fg/-f is deprecated; foreground is now the default mode"
+msgstr ""
+
+#: src/main.cpp:216
+msgid "configLoad failed"
+msgstr ""
+
+#: src/main.cpp:220
+#, c-format
+msgid "Starting digital-wellbeing — %u min work, %u min break"
+msgstr ""
+
+#: src/main.cpp:229
+msgid "daemonize failed"
+msgstr ""

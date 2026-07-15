@@ -1,4 +1,5 @@
 #include "breakWindow.h"
+#include "i18n.h"
 
 #include <cstdlib>
 
@@ -36,7 +37,7 @@ BreakWindow::BreakWindow(int totalSeconds, QEventLoop *loop)
     , mSkipped(false)
     , mNotifiedReminder(false)
 {
-    setWindowTitle("Take a break");
+    setWindowTitle(_("Take a break"));
     showFullScreen();
     setStyleSheet("background-color: rgba(24, 24, 27, 0.92);");
 
@@ -52,7 +53,7 @@ BreakWindow::BreakWindow(int totalSeconds, QEventLoop *loop)
 
     layout->addSpacing(40);
 
-    mSkipButton = new QPushButton("Skip Break", this);
+    mSkipButton = new QPushButton(_("Skip Break"), this);
     mSkipButton->setMinimumSize(220, 60);
     mSkipButton->setStyleSheet(
         "font-size: 18pt; padding: 12px 32px; "
@@ -83,9 +84,11 @@ void BreakWindow::tick()
     if (!mNotifiedReminder && mRemaining <= 300)
     {
         mNotifiedReminder = true;
-        int ret = system(
-            "notify-send -t 30000 'Digital Wellbeing' "
-            "'5 minutes of break remaining'");
+        char cmd[1024];
+        snprintf(cmd, sizeof(cmd),
+            "notify-send -t 30000 'Digital Wellbeing' '%s'",
+            _("5 minutes of break remaining"));
+        int ret = system(cmd);
         (void)ret;
     }
 

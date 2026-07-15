@@ -1,4 +1,6 @@
 #include "service.h"
+#include "log.h"
+#include "i18n.h"
 
 #include <errno.h>
 #include <stdio.h>
@@ -11,17 +13,18 @@
 #define SERVICE_FILE "digital-wellbeing.service"
 
 /*
- * Built-in service unit.
- * %h is expanded by systemd to the user's home directory.
+ * Built-in service unit format.
+ * %%h is expanded by systemd to the user's home directory.
+ * The Description is translated at write time via _().
  * The binary is installed to ~/.local/bin/ per KISS: no root needed.
  */
-static const char *kServiceUnit =
+static const char *kServiceUnitFormat =
     "[Unit]\n"
-    "Description=Digital Wellbeing — pomodoro-style break reminder\n"
+    "Description=%s\n"
     "\n"
     "[Service]\n"
     "Type=simple\n"
-    "ExecStart=%h/.local/bin/digital-wellbeing\n"
+    "ExecStart=%%h/.local/bin/digital-wellbeing\n"
     "Restart=on-failure\n"
     "RestartSec=10\n"
     "\n"
@@ -57,8 +60,7 @@ static int ensureServiceDir(void)
         }
         if (system(cmd) != 0)
         {
-            fprintf(stderr,
-                "service: failed to create dir %s\n", dir);
+            logMsg(_("Failed to create directory %s"), dir);
             return -1;
         }
     }
@@ -90,25 +92,21 @@ int serviceInstall(void)
 {
     if (ensureServiceDir() != 0)
     {
-        fprintf(stderr,
-            "service: cannot ensure service directory\n");
+        logMsg(_("Cannot ensure service directory"));
         return -1;
     }
 
     char *path = servicePath();
     if (!path)
     {
-        fprintf(stderr,
-            "service: cannot build service path\n");
+        logMsg(_("Cannot build service path"));
         return -1;
     }
 
     /* Check if already installed */
     if (access(path, F_OK) == 0)
     {
-        fprintf(stderr,
-            "service: %s already exists, skipping install\n",
-            path);
+        logMsg(_("%s already exists, skipping install"), path);
         free(path);
         return 0;
     }
@@ -121,16 +119,15 @@ int serviceInstall(void)
         return -1;
     }
 
-    fprintf(f, "%s", kServiceUnit);
+    fprintf(f, kServiceUnitFormat,
+        _("Digital Wellbeing — pomodoro-style break reminder"));
     fclose(f);
 
-    fprintf(stderr,
-        "service: installed %s\n", path);
+    logMsg(_("Installed %s"), path);
     free(path);
 
-    fprintf(stderr,
-        "service: run 'systemctl --user enable "
-        "digital-wellbeing.service' to start on login\n");
+    logMsg(_("Run 'systemctl --user enable "
+        "digital-wellbeing.service' to start on login"));
 
     return 0;
 }

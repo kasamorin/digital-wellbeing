@@ -1,4 +1,6 @@
 #include "config.h"
+#include "log.h"
+#include "i18n.h"
 
 #include <errno.h>
 #include <stdio.h>
@@ -87,7 +89,7 @@ static int writeDefaultConfig(const char *path)
     fclose(f);
     json_object_put(root);
 
-    fprintf(stderr, "config: wrote defaults to %s\n", path);
+    logMsg(_("Wrote default config to %s"), path);
     return 0;
 }
 
@@ -113,14 +115,14 @@ Config *configLoad(void)
 {
     if (ensureConfigDir() != 0)
     {
-        fprintf(stderr, "config: failed to create config directory\n");
+        logMsg(_("Failed to create config directory"));
         return NULL;
     }
 
     char *path = configPath();
     if (!path)
     {
-        fprintf(stderr, "config: failed to build config path\n");
+        logMsg(_("Failed to build config path"));
         return NULL;
     }
 
@@ -137,7 +139,7 @@ Config *configLoad(void)
     struct json_object *root = json_object_from_file(path);
     if (!root)
     {
-        fprintf(stderr, "config: failed to parse %s: %s\n", path,
+        logMsg(_("Failed to parse %s: %s"), path,
             json_util_get_last_err());
         free(path);
         return NULL;
@@ -146,7 +148,7 @@ Config *configLoad(void)
     Config *cfg = calloc(1, sizeof(Config));
     if (!cfg)
     {
-        fprintf(stderr, "config: out of memory\n");
+        logMsg(_("Out of memory"));
         json_object_put(root);
         free(path);
         return NULL;

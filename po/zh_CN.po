@@ -1,0 +1,128 @@
+# Chinese (Simplified) translations for digital-wellbeing.
+# Copyright (C) 2026 kasamorin
+# This file is distributed under the same license as the digital-wellbeing package.
+#
+msgid ""
+msgstr ""
+"Project-Id-Version: digital-wellbeing\n"
+"Report-Msgid-Bugs-To: \n"
+"POT-Creation-Date: 2026-07-15 22:53+0800\n"
+"PO-Revision-Date: 2026-07-15 22:53+0800\n"
+"Last-Translator: kasamorin\n"
+"Language-Team: Chinese (Simplified)\n"
+"Language: zh_CN\n"
+"MIME-Version: 1.0\n"
+"Content-Type: text/plain; charset=UTF-8\n"
+"Content-Transfer-Encoding: 8bit\n"
+"Plural-Forms: nplurals=1; plural=0;\n"
+
+#: src/config.c:92
+#, c-format
+msgid "Wrote default config to %s"
+msgstr "已写入默认配置到 %s"
+
+#: src/config.c:118
+msgid "Failed to create config directory"
+msgstr "无法创建配置目录"
+
+#: src/config.c:125
+msgid "Failed to build config path"
+msgstr "无法构建配置路径"
+
+#: src/config.c:142
+#, c-format
+msgid "Failed to parse %s: %s"
+msgstr "解析失败 %s：%s"
+
+#: src/config.c:151
+msgid "Out of memory"
+msgstr "内存不足"
+
+#: src/service.c:63
+#, c-format
+msgid "Failed to create directory %s"
+msgstr "无法创建目录 %s"
+
+#: src/service.c:95
+msgid "Cannot ensure service directory"
+msgstr "无法确保 service 目录存在"
+
+#: src/service.c:102
+msgid "Cannot build service path"
+msgstr "无法构建 service 路径"
+
+#: src/service.c:109
+#, c-format
+msgid "%s already exists, skipping install"
+msgstr "%s 已存在，跳过安装"
+
+#: src/service.c:123
+msgid "Digital Wellbeing — pomodoro-style break reminder"
+msgstr "Digital Wellbeing — 番茄工作法休息提醒"
+
+#: src/service.c:126
+#, c-format
+msgid "Installed %s"
+msgstr "已安装 %s"
+
+#: src/service.c:129
+msgid ""
+"Run 'systemctl --user enable digital-wellbeing.service' to start on login"
+msgstr ""
+"运行 'systemctl --user enable digital-wellbeing.service' 以在登录时启动"
+
+#: src/breakWindow.cpp:40
+msgid "Take a break"
+msgstr "该休息一下了"
+
+#: src/breakWindow.cpp:56
+msgid "Skip Break"
+msgstr "跳过休息"
+
+#: src/breakWindow.cpp:90
+msgid "5 minutes of break remaining"
+msgstr "休息时间还剩5分钟"
+
+#: src/main.cpp:52
+#, c-format
+msgid "daemon: forked child pid %d, exiting parent"
+msgstr "守护进程：已 fork 子进程 pid %d，父进程退出"
+
+#: src/main.cpp:107
+#, c-format
+msgid "Work period started — %u minutes"
+msgstr "工作周期开始 — %u 分钟"
+
+#: src/main.cpp:124
+msgid "5 minutes until break time"
+msgstr "还有5分钟到休息时间"
+
+#: src/main.cpp:136
+#, c-format
+msgid "Break period started — %u minutes"
+msgstr "休息周期开始 — %u 分钟"
+
+#: src/main.cpp:148
+msgid "Break skipped, starting new work period"
+msgstr "休息已跳过，开始新的工作周期"
+
+#: src/main.cpp:149
+msgid "Break completed, starting new work period"
+msgstr "休息完成，开始新的工作周期"
+
+#: src/main.cpp:204
+msgid "--fg/-f is deprecated; foreground is now the default mode"
+msgstr "--fg/-f 已弃用，前台模式现在是默认模式"
+
+#: src/main.cpp:216
+msgid "configLoad failed"
+msgstr "配置加载失败"
+
+#: src/main.cpp:220
+#, c-format
+msgid "Starting digital-wellbeing — %u min work, %u min break"
+msgstr "启动 digital-wellbeing — 工作 %u 分钟，休息 %u 分钟"
+
+#: src/main.cpp:229
+msgid "daemonize failed"
+msgstr "守护进程化失败"
