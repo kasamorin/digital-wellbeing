@@ -66,7 +66,14 @@ Only two fields:
 
 `./digital-wellbeing install` subcommand writes a built-in systemd user unit to `~/.config/systemd/user/digital-wellbeing.service`. Does NOT run `systemctl --user enable` (prints instructions for the user). Skips if file exists.
 
-The unit's `Description=` line is translated at write time via `_()`. The unit template uses `%%h` (printf-escaped) so systemd's `%h` specifier survives fprintf formatting.
+The unit's `Description=` line is translated at write time via `_()`. `ExecStart` defaults to `/usr/bin/digital-wellbeing` (PKGBUILD install target). Users of `make install` (which installs to `~/.local/bin/`) must edit `ExecStart=` in the generated service file.
+
+### Packaging (pkg/)
+
+`pkg/` contains PKGBUILD and pre-built files for Arch Linux packaging (`makepkg`). The binary and `.mo` files are copied here after `make && make mo`, then `makepkg` installs them directly without recompilation.
+
+- `PKGBUILD` — Arch packaging script (`options=('!debug')`, no debug package)
+- `uninstall-user-data.sh` — cleanup script for user data after `pacman -R`
 
 ### Logging (src/log.c/h)
 
