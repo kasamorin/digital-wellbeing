@@ -7,11 +7,8 @@ CXX      := g++
 C_PKGS   := json-c
 CXX_PKGS := Qt6Widgets Qt6Gui Qt6Core
 
-# C standard (overridable for older toolchains, e.g. gnu2x on GCC 13)
-CSTD     ?= gnu23
-
-# C flags: gcc, C23
-CFLAGS   := -std=$(CSTD) -Wall -Wextra -Wpedantic \
+# C flags: gcc, C23 (requires GCC 14+ for the -std=gnu23 option)
+CFLAGS   := -std=gnu23 -Wall -Wextra -Wpedantic \
             $(shell pkg-config --cflags $(C_PKGS))
 
 # C++ flags: g++, C++23, -fpic needed for gcc 16 + Qt6 protected symbols
