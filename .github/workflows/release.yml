@@ -57,11 +57,20 @@ jobs:
             *.sha256
 
   archpkg:
-    # Arch Linux upstream ships x86_64 only. Arch Linux ARM is a separate
-    # distro with its own repositories, so a mainline aarch64 .pkg.tar.zst
-    # would not be usable; aarch64 users get the generic tarball from `build`.
-    name: Arch package (x86_64)
-    runs-on: ubuntu-24.04
+    name: Arch package ${{ matrix.arch }}
+    runs-on: ${{ matrix.runner }}
+    strategy:
+      fail-fast: false
+      matrix:
+        include:
+          # Official archlinux image is x86_64-only; aarch64 uses the actively
+          # maintained Arch Linux ARM image natively on the arm runner.
+          - runner: ubuntu-24.04
+            arch: x86_64
+            image: archlinux:base-devel
+          - runner: ubuntu-24.04-arm
+            arch: aarch64
+            image: menci/archlinuxarm:base-devel
 
     steps:
       # Checkout on the host, so no JS action needs Node inside the minimal
@@ -71,9 +80,9 @@ jobs:
       - name: Build package in Arch container
         run: |
           docker run --rm -v "$GITHUB_WORKSPACE:/work" -w /work \
-            archlinux:base-devel bash -c '
+            ${{ matrix.image }} bash -c '
               set -e
-              # Official Arch images strip the signing key; init keyring first.
+              # Arch images strip the local signing key; init the keyring first.
               pacman-key --init
               pacman-key --populate
               pacman -Syu --noconfirm --needed curl ca-certificates json-c qt6-base gettext
@@ -84,14 +93,14 @@ jobs:
               su builder -c "cd /work/pkg && makepkg --noconfirm --clean"
             '
           cp pkg/*.pkg.tar.zst .
-          sha256sum *.pkg.tar.zst > archpkg.sha256
+          sha256sum *.pkg.tar.zst > archpkg-${{ matrix.arch }}.sha256
 
       - uses: actions/upload-artifact@v4
         with:
-          name: archpkg-x86_64
+          name: archpkg-${{ matrix.arch }}
           path: |
             *.pkg.tar.zst
-            archpkg.sha256
+            archpkg-${{ matrix.arch }}.sha256
 
   release:
     name: Publish release
