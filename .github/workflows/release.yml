@@ -1,0 +1,73 @@
+name: Release
+
+on:
+  push:
+    tags:
+      - 'v*'
+
+permissions:
+  contents: write
+
+jobs:
+  build:
+    name: Build ${{ matrix.arch }}
+    runs-on: ${{ matrix.runner }}
+    strategy:
+      fail-fast: false
+      matrix:
+        include:
+          - runner: ubuntu-24.04
+            arch: x86_64
+          - runner: ubuntu-24.04-arm
+            arch: aarch64
+
+    steps:
+      - uses: actions/checkout@v4
+
+      - name: Install dependencies
+        run: |
+          sudo apt-get update
+          sudo apt-get install -y --no-install-recommends \
+            gcc g++ make pkg-config libjson-c-dev qt6-base-dev gettext
+
+      - name: Build
+        run: make clean && make CSTD=gnu2x
+
+      - name: Compile translations
+        run: make mo
+
+      - name: Package
+        run: |
+          TAG="${GITHUB_REF_NAME}"
+          STAGE="digital-wellbeing-${TAG}-${{ matrix.arch }}"
+          mkdir -p "$STAGE/bin" "$STAGE/share/locale"
+          install -Dm755 digital-wellbeing "$STAGE/bin/digital-wellbeing"
+          for lang in $(cat po/LINGUAS); do
+            install -Dm644 "build/locale/$lang/LC_MESSAGES/digital-wellbeing.mo" \
+              "$STAGE/share/locale/$lang/LC_MESSAGES/digital-wellbeing.mo"
+          done
+          tar -czf "${STAGE}.tar.gz" "$STAGE"
+          sha256sum "${STAGE}.tar.gz" > "${STAGE}.tar.gz.sha256"
+
+      - uses: actions/upload-artifact@v4
+        with:
+          name: ${{ matrix.arch }}
+          path: |
+            *.tar.gz
+            *.sha256
+
+  release:
+    name: Publish release
+    needs: build
+    runs-on: ubuntu-24.04
+    steps:
+      - uses: actions/download-artifact@v4
+        with:
+          path: dist
+          merge-multiple: true
+
+      - name: Create release
+        uses: softprops/action-gh-release@v2
+        with:
+          files: dist/*
+          generate_release_notes: true
