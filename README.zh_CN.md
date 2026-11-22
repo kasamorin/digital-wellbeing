@@ -2,6 +2,9 @@
 
 [English](README.md) | [中文](README.zh_CN.md)
 
+[![Release](https://img.shields.io/github/v/release/kasamorin/digital-wellbeing)](https://github.com/kasamorin/digital-wellbeing/releases)
+[![License: GPL v3](https://img.shields.io/badge/License-GPLv3-blue.svg)](COPYING)
+
 一个轻量级的番茄工作法休息提醒工具，适用于 Linux（KDE Plasma / Qt6）。
 
 > **注意：** 本项目完全由 AI（Claude Code）开发。
@@ -27,7 +30,22 @@ KISS 原则：不检测空闲、不锁屏、不轰炸通知、不提供 CLI 状�
 - `libnotify` — 提供 `notify-send` 桌面通知命令
 - `gettext` — 仅构建时需要（msgfmt 用于 .po → .mo 编译）
 
+每个 [GitHub Release](https://github.com/kasamorin/digital-wellbeing/releases) 都附带 **x86_64** 和 **aarch64** 预编译二进制。其他架构可按上述依赖从源码构建。
+
 ## 安装
+
+### 预编译二进制
+
+从 [Releases](https://github.com/kasamorin/digital-wellbeing/releases) 下载与你架构对应的压缩包（`x86_64` 或 `aarch64`），用 `.sha256` 文件校验后解压到 `~/.local`：
+
+```bash
+sha256sum -c digital-wellbeing-*.tar.gz.sha256
+tar -xzf digital-wellbeing-*.tar.gz -C ~/.local --strip-components=1
+```
+
+二进制文件位于 `~/.local/bin/digital-wellbeing`，翻译文件在 `~/.local/share/locale/` 下。
+
+### 从源码构建
 
 ```bash
 make
@@ -128,6 +146,16 @@ make po           # 将模板合并到各语言 PO 文件
 make mo           # 从 .po 编译 .mo 文件
 make locales      # pot + po + mo（完整 i18n 刷新）
 ```
+
+## 开发
+
+这是一个自用小工具，没有单独的贡献指南。参与开发时：
+
+- 用 `make clean && make` 构建，二进制生成在 `./digital-wellbeing`。
+- 用 `make install` 安装（默认到 `~/.local`）。打包时可覆盖目标路径：`make install PREFIX=/usr DESTDIR="$pkgdir"`。
+- 用 `make locales` 刷新翻译，新增语言需修改 `po/LINGUAS`。
+- 提交信息沿用现有的 `feat:` / `fix:` / `docs:` 约定。
+- AI agent 说明见 `AGENTS.md`。
 
 ## 许可证
 

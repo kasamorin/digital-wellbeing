@@ -2,6 +2,9 @@
 
 [English](README.md) | [中文](README.zh_CN.md)
 
+[![Release](https://img.shields.io/github/v/release/kasamorin/digital-wellbeing)](https://github.com/kasamorin/digital-wellbeing/releases)
+[![License: GPL v3](https://img.shields.io/badge/License-GPLv3-blue.svg)](COPYING)
+
 A lightweight pomodoro-style break reminder for Linux (KDE Plasma / Qt6).
 
 > **Note:** This project is entirely developed by AI (Claude Code).
@@ -27,7 +30,27 @@ KISS principle: no idle detection, no lock screen, no notification spam, no CLI 
 - `libnotify` — provides `notify-send` for desktop notifications
 - `gettext` — build-time only (msgfmt for .po → .mo)
 
+Prebuilt binaries for **x86_64** and **aarch64** are attached to each
+[GitHub Release](https://github.com/kasamorin/digital-wellbeing/releases).
+Other architectures can build from source with the dependencies above.
+
 ## Installation
+
+### Prebuilt binary
+
+Download the tarball for your architecture (`x86_64` or `aarch64`) from
+[Releases](https://github.com/kasamorin/digital-wellbeing/releases), verify it
+with the `.sha256` file, then extract it into `~/.local`:
+
+```bash
+sha256sum -c digital-wellbeing-*.tar.gz.sha256
+tar -xzf digital-wellbeing-*.tar.gz -C ~/.local --strip-components=1
+```
+
+This places the binary at `~/.local/bin/digital-wellbeing` and translations
+under `~/.local/share/locale/`.
+
+### From source
 
 ```bash
 make
@@ -123,6 +146,18 @@ make po           # merge template into language PO files
 make mo           # compile .mo files from .po
 make locales      # pot + po + mo (full i18n refresh)
 ```
+
+## Development
+
+This is a small self-use project without a separate contributing guide. To work
+on it:
+
+- Build with `make clean && make`; the binary lands at `./digital-wellbeing`.
+- Install with `make install` (defaults to `~/.local`). For packaging, override
+  the destination: `make install PREFIX=/usr DESTDIR="$pkgdir"`.
+- Refresh translations with `make locales`, then add a language to `po/LINGUAS`.
+- Commit messages follow the existing `feat:` / `fix:` / `docs:` convention.
+- AI-agent instructions live in `AGENTS.md`.
 
 ## License
 
