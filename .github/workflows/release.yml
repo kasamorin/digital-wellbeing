@@ -51,14 +51,51 @@ jobs:
 
       - uses: actions/upload-artifact@v4
         with:
-          name: ${{ matrix.arch }}
+          name: binary-${{ matrix.arch }}
           path: |
             *.tar.gz
             *.sha256
 
+  archpkg:
+    # Arch Linux upstream ships x86_64 only. Arch Linux ARM is a separate
+    # distro with its own repositories, so a mainline aarch64 .pkg.tar.zst
+    # would not be usable; aarch64 users get the generic tarball from `build`.
+    name: Arch package (x86_64)
+    runs-on: ubuntu-24.04
+
+    steps:
+      # Checkout on the host, so no JS action needs Node inside the minimal
+      # Arch image. Only pacman/makepkg run in the container.
+      - uses: actions/checkout@v4
+
+      - name: Build package in Arch container
+        run: |
+          docker run --rm -v "$GITHUB_WORKSPACE:/work" -w /work \
+            archlinux:base-devel bash -c '
+              set -e
+              # Official Arch images strip the signing key; init keyring first.
+              pacman-key --init
+              pacman-key --populate
+              pacman -Syu --noconfirm --needed curl ca-certificates json-c qt6-base gettext
+              # makepkg refuses to run as root; deps were installed above, so
+              # do not pass --syncdeps (that would need root again).
+              useradd -m builder
+              chown -R builder:builder /work
+              su builder -c "cd /work/pkg && makepkg --noconfirm --clean"
+            '
+          cp pkg/*.pkg.tar.zst .
+          sha256sum *.pkg.tar.zst > archpkg.sha256
+
+      - uses: actions/upload-artifact@v4
+        with:
+          name: archpkg-x86_64
+          path: |
+            *.pkg.tar.zst
+            archpkg.sha256
+
   release:
     name: Publish release
-    needs: build
+    needs: [build, archpkg]
     runs-on: ubuntu-24.04
     steps:
       - uses: actions/download-artifact@v4
