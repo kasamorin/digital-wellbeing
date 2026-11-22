@@ -7,8 +7,11 @@ CXX      := g++
 C_PKGS   := json-c
 CXX_PKGS := Qt6Widgets Qt6Gui Qt6Core
 
+# C standard (overridable for older toolchains, e.g. gnu2x on GCC 13)
+CSTD     ?= gnu23
+
 # C flags: gcc, C23
-CFLAGS   := -std=gnu23 -Wall -Wextra -Wpedantic \
+CFLAGS   := -std=$(CSTD) -Wall -Wextra -Wpedantic \
             $(shell pkg-config --cflags $(C_PKGS))
 
 # C++ flags: g++, C++23, -fpic needed for gcc 16 + Qt6 protected symbols
@@ -33,9 +36,14 @@ OBJECTS := $(C_OBJECTS) $(CXX_OBJECTS)
 
 TARGET := digital-wellbeing
 
+# Install paths. PREFIX defaults to ~/.local; DESTDIR is for staged installs
+# (packaging). Override both, e.g. make install PREFIX=/usr DESTDIR="$pkgdir".
+PREFIX  ?= $(HOME)/.local
+LOCALEDIR ?= $(PREFIX)/share/locale
+
 # i18n — gettext
 PODIR     := po
-LOCALEDIR := $(HOME)/.local/share/locale
+LOCALEDIR_BUILD := $(BUILDDIR)/locale
 LINGUAS   := $(shell cat $(PODIR)/LINGUAS 2>/dev/null)
 
 all: dirs $(TARGET)
@@ -79,26 +87,26 @@ po: pot
 		fi; \
 	done
 
-# Compile .po into .mo
+# Compile .po into .mo under build/ (no writes into $HOME).
 mo:
 	@for lang in $(LINGUAS); do \
-		mkdir -p $(LOCALEDIR)/$$lang/LC_MESSAGES; \
+		mkdir -p $(LOCALEDIR_BUILD)/$$lang/LC_MESSAGES; \
 		msgfmt $(PODIR)/$$lang.po \
-			-o $(LOCALEDIR)/$$lang/LC_MESSAGES/digital-wellbeing.mo; \
+			-o $(LOCALEDIR_BUILD)/$$lang/LC_MESSAGES/digital-wellbeing.mo; \
 	done
 
 locales: pot po mo
 
 install: $(TARGET) mo
-	install -Dm755 $(TARGET) $(DESTDIR)$(HOME)/.local/bin/$(TARGET)
+	install -Dm755 $(TARGET) $(DESTDIR)$(PREFIX)/bin/$(TARGET)
 	@for lang in $(LINGUAS); do \
 		install -Dm644 \
-			$(LOCALEDIR)/$$lang/LC_MESSAGES/digital-wellbeing.mo \
-			$(DESTDIR)$(HOME)/.local/share/locale/$$lang/LC_MESSAGES/digital-wellbeing.mo; \
+			$(LOCALEDIR_BUILD)/$$lang/LC_MESSAGES/digital-wellbeing.mo \
+			$(DESTDIR)$(LOCALEDIR)/$$lang/LC_MESSAGES/digital-wellbeing.mo; \
 	done
 
 uninstall:
-	rm -f $(DESTDIR)$(HOME)/.local/bin/$(TARGET)
+	rm -f $(DESTDIR)$(PREFIX)/bin/$(TARGET)
 	@for lang in $(LINGUAS); do \
-		rm -f $(DESTDIR)$(HOME)/.local/share/locale/$$lang/LC_MESSAGES/digital-wellbeing.mo; \
+		rm -f $(DESTDIR)$(LOCALEDIR)/$$lang/LC_MESSAGES/digital-wellbeing.mo; \
 	done
