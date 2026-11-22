@@ -1,86 +1,93 @@
 # Digital Wellbeing
 
-[English](README.md) | [中文](README.zh_CN.md)
+[中文](README.md) | [English](README.en.md)
 
 [![Release](https://img.shields.io/github/v/release/kasamorin/digital-wellbeing)](https://github.com/kasamorin/digital-wellbeing/releases)
 [![License: GPL v3](https://img.shields.io/badge/License-GPLv3-blue.svg)](COPYING)
 
-A lightweight pomodoro-style break reminder for Linux (KDE Plasma / Qt6).
+一个轻量级的番茄工作法休息提醒工具，适用于 Linux（KDE Plasma / Qt6）。
 
-> **Note:** This project is entirely developed by AI (Claude Code).
+> **注意：** 本项目完全由 AI（Claude Code）开发。
 
-## How it works
+## 工作原理
 
-- **Work timer** (default 25 minutes) — focus session
-- **Pre-notification** at 5 minutes remaining via desktop notification
-- **Qt6 fullscreen break overlay** when work time ends
-  - Large countdown timer (MM:SS)
-  - "Skip Break" button and Ctrl+Q shortcut
-  - Semi-transparent dark background, stays on top
-- Cycle repeats until stopped (SIGTERM/SIGINT)
+- **工作计时器**（默认 25 分钟）—— 专注工作时段
+- **预通知**：在工作结束前 5 分钟通过桌面通知提醒
+- **Qt6 全屏休息覆盖窗口**：工作时间结束时弹出
+  - 大字体倒计时（MM:SS 格式）
+  - "跳过休息"按钮和 Ctrl+Q 快捷键
+  - 半透明深色背景，始终置顶
+- 循环重复，直到收到停止信号（SIGTERM/SIGINT）
 
-KISS principle: no idle detection, no lock screen, no notification spam, no CLI status queries — just work/break cycles and a fullscreen overlay.
+KISS 原则：不检测空闲、不锁屏、不轰炸通知、不提供 CLI 状态查询 —— 只有工作/休息循环和全屏覆盖窗口。
 
-## Requirements
+## 依赖
 
-- **Arch Linux** (or any Linux with the dependencies below)
-- `gcc` + `make` — build
-- `json-c` — config parsing
-- `qt6-base` — break window GUI
-- `libnotify` — provides `notify-send` for desktop notifications
-- `gettext` — build-time only (msgfmt for .po → .mo)
+- **Arch Linux**（或其他具有以下依赖的 Linux 发行版）
+- `gcc`（14+，支持 `-std=gnu23`）+ `make` — 构建
+- `json-c` — 配置文件解析
+- `qt6-base` — 休息窗口 GUI
+- `libnotify` — 提供 `notify-send` 桌面通知命令
+- `gettext` — 仅构建时需要（msgfmt 用于 .po → .mo 编译）
 
-Prebuilt binaries for **x86_64** and **aarch64** are attached to each
-[GitHub Release](https://github.com/kasamorin/digital-wellbeing/releases).
-Other architectures can build from source with the dependencies above.
+## 安装
 
-## Installation
+### Arch Linux（pacman 包）
 
-### Prebuilt binary
+每个 [Release](https://github.com/kasamorin/digital-wellbeing/releases) 都提供 `x86_64` 和 `aarch64` 的 `.pkg.tar.zst`，下载后用 pacman 安装：
 
-Download the tarball for your architecture (`x86_64` or `aarch64`) from
-[Releases](https://github.com/kasamorin/digital-wellbeing/releases), verify it
-with the `.sha256` file, then extract it into `~/.local`:
+```bash
+sudo pacman -U digital-wellbeing-*-x86_64.pkg.tar.zst
+```
+
+也可以从仓库里的 `pkg/PKGBUILD` 自行构建（适用于任何 Arch 架构）：
+
+```bash
+cd pkg && makepkg -si
+```
+
+### 预编译二进制（通用 tarball）
+
+同样在 [Releases](https://github.com/kasamorin/digital-wellbeing/releases) 提供 `x86_64` 和 `aarch64` 的通用压缩包，适合非 Arch 发行版。用 `.sha256` 文件校验后解压到 `~/.local`：
 
 ```bash
 sha256sum -c digital-wellbeing-*.tar.gz.sha256
 tar -xzf digital-wellbeing-*.tar.gz -C ~/.local --strip-components=1
 ```
 
-This places the binary at `~/.local/bin/digital-wellbeing` and translations
-under `~/.local/share/locale/`.
+二进制文件位于 `~/.local/bin/digital-wellbeing`，翻译文件在 `~/.local/share/locale/` 下。
 
-### From source
+### 从源码构建
 
 ```bash
 make
 make install
 ```
 
-This installs the binary to `~/.local/bin/digital-wellbeing`.
+将二进制文件安装到 `~/.local/bin/digital-wellbeing`。
 
-### systemd user service
+### systemd 用户服务
 
-To start on login:
+设置开机自启：
 
 ```bash
-./digital-wellbeing install    # writes the systemd user unit file
+./digital-wellbeing install    # 写入 systemd 用户单元文件
 systemctl --user enable digital-wellbeing
 systemctl --user start digital-wellbeing
 ```
 
-Note: `./digital-wellbeing install` only writes the service file and prints instructions. Enable/start is done manually via systemctl.
+注意：`./digital-wellbeing install` 仅写入 service 文件并打印提示信息。启用和启动需手动通过 systemctl 完成。
 
-## Usage
+## 使用方法
 
 ```bash
-digital-wellbeing              # foreground — shows logs on stderr
-digital-wellbeing --daemon     # background — fork and detach
-digital-wellbeing install      # install systemd user service file
-digital-wellbeing --help       # show usage
+digital-wellbeing              # 前台模式 — 在 stderr 输出日志
+digital-wellbeing --daemon     # 后台模式 — fork 并脱离终端
+digital-wellbeing install      # 安装 systemd 用户 service 文件
+digital-wellbeing --help       # 显示帮助信息
 ```
 
-In foreground mode, cycle transitions are logged to stderr with timestamps:
+前台模式下，循环转换会以时间戳格式记录到 stderr：
 
 ```
 [14:30:00] Starting digital-wellbeing — 25 min work, 5 min break
@@ -89,21 +96,21 @@ In foreground mode, cycle transitions are logged to stderr with timestamps:
 [14:55:00] Break completed, starting new work period
 ```
 
-## Directory layout
+## 目录结构
 
-| Path | Purpose |
-|------|---------|
-| `/usr/bin/digital-wellbeing` | Binary (PKGBUILD install) |
-| `/usr/share/locale/*/LC_MESSAGES/digital-wellbeing.mo` | gettext translations |
-| `~/.config/digital-wellbeing/config.json` | User config |
-| `~/.config/systemd/user/digital-wellbeing.service` | systemd user unit |
+| 路径 | 用途 |
+|------|------|
+| `/usr/bin/digital-wellbeing` | 二进制文件（PKGBUILD 安装位置） |
+| `/usr/share/locale/*/LC_MESSAGES/digital-wellbeing.mo` | gettext 翻译文件 |
+| `~/.config/digital-wellbeing/config.json` | 用户配置文件 |
+| `~/.config/systemd/user/digital-wellbeing.service` | systemd 用户单元 |
 
-If you install to `~/.local/bin/` instead (e.g. `make install`), edit the
-service file's `ExecStart=` line accordingly.
+如果改为安装到 `~/.local/bin/`（如使用 `make install`），需自行修改
+service 文件中的 `ExecStart=` 路径。
 
-## Configuration
+## 配置
 
-`~/.config/digital-wellbeing/config.json` (auto-generated on first run):
+`~/.config/digital-wellbeing/config.json`（首次运行自动生成）：
 
 ```json
 {
@@ -112,53 +119,60 @@ service file's `ExecStart=` line accordingly.
 }
 ```
 
-## Internationalization (i18n)
+| 键 | 默认值 | 有效范围 |
+|----|--------|----------|
+| `workMinutes` | 25 | 1–1440 |
+| `breakMinutes` | 5 | 1–1440 |
 
-gettext-based translations. Supported languages:
+超出范围的值会自动回退到默认值。
 
-- English (`en`) — default / fallback
-- Chinese Simplified (`zh_CN`)
+## 国际化 (i18n)
 
-The locale is detected from the `LANG` environment variable:
+基于 gettext 的翻译。支持的语言：
 
-```bash
-LANG=zh_CN.UTF-8 ./digital-wellbeing          # Chinese UI and messages
-LANG=en_US.UTF-8 ./digital-wellbeing          # English
-```
+- 英文 (`en`) — 默认/回退语言
+- 简体中文 (`zh_CN`)
 
-To add a new language:
-
-1. Create `po/<lang>.po` from `po/digital-wellbeing.pot`
-2. Fill in translations
-3. Add the language code to `po/LINGUAS`
-4. `make mo` to compile
-5. Send a pull request
-
-## Build targets
+语言通过 `LANG` 环境变量检测：
 
 ```bash
-make              # build binary
-make clean        # remove build artifacts
-make install      # install binary + translations to ~/.local/
-make uninstall    # remove installed files
-make pot          # regenerate PO template from source
-make po           # merge template into language PO files
-make mo           # compile .mo files from .po
-make locales      # pot + po + mo (full i18n refresh)
+LANG=zh_CN.UTF-8 ./digital-wellbeing          # 中文界面和消息
+LANG=en_US.UTF-8 ./digital-wellbeing          # 英文界面和消息
 ```
 
-## Development
+翻译文件优先从 `~/.local/share/locale` 读取，找不到时回退到 `/usr/share/locale`，因此用 pacman 安装的翻译对普通用户同样生效。
 
-This is a small self-use project without a separate contributing guide. To work
-on it:
+添加新语言：
 
-- Build with `make clean && make`; the binary lands at `./digital-wellbeing`.
-- Install with `make install` (defaults to `~/.local`). For packaging, override
-  the destination: `make install PREFIX=/usr DESTDIR="$pkgdir"`.
-- Refresh translations with `make locales`, then add a language to `po/LINGUAS`.
-- Commit messages follow the existing `feat:` / `fix:` / `docs:` convention.
-- AI-agent instructions live in `AGENTS.md`.
+1. 从 `po/digital-wellbeing.pot` 创建 `po/<语言代码>.po`
+2. 填入翻译
+3. 将语言代码添加到 `po/LINGUAS`
+4. `make mo` 编译
+5. 发送 pull request
 
-## License
+## 构建目标
 
-GPLv3 — see `COPYING`.
+```bash
+make              # 构建二进制文件
+make clean        # 清理构建产物
+make install      # 安装二进制文件和翻译文件到 ~/.local/
+make uninstall    # 移除已安装文件
+make pot          # 从源代码重新生成 PO 模板
+make po           # 将模板合并到各语言 PO 文件
+make mo           # 从 .po 编译 .mo 文件
+make locales      # pot + po + mo（完整 i18n 刷新）
+```
+
+## 开发
+
+这是一个自用小工具，没有单独的贡献指南。参与开发时：
+
+- 用 `make clean && make` 构建，二进制生成在 `./digital-wellbeing`。
+- 用 `make install` 安装（默认到 `~/.local`）。打包时可覆盖目标路径：`make install PREFIX=/usr DESTDIR="$pkgdir"`。
+- 用 `make locales` 刷新翻译，新增语言需修改 `po/LINGUAS`。
+- 提交信息沿用现有的 `feat:` / `fix:` / `docs:` 约定。
+- AI agent 说明见 `AGENTS.md`。
+
+## 许可证
+
+GPLv3 — 详见 `COPYING`。
