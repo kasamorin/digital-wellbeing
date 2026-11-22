@@ -17,3 +17,4 @@ pkg/src/
 
 # Local agent config
 .claude/
+.workbuddy/
