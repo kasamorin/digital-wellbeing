@@ -7,7 +7,7 @@
 # is downloaded directly from the project's own GitHub release tag.
 
 pkgname=digital-wellbeing
-_pkgver=1.0.0
+_pkgver=1.1.0
 pkgver=$_pkgver
 pkgrel=1
 pkgdesc="番茄工作法休息提醒，Qt6 全屏覆盖窗口"
