@@ -1,15 +1,20 @@
 #include "breakWindow.h"
 #include "i18n.h"
 
+#include <csignal>
 #include <cstdlib>
 
 #include <QApplication>
 #include <QLabel>
+#include <QProcess>
 #include <QPushButton>
 #include <QShortcut>
 #include <QTimer>
 #include <QVBoxLayout>
 #include <QWidget>
+
+/* Set by main.cpp's signal handler; lets SIGTERM close an active overlay. */
+extern "C" volatile sig_atomic_t gRunning;
 
 class BreakWindow : public QWidget
 {
@@ -77,6 +82,15 @@ BreakWindow::BreakWindow(int totalSeconds, QEventLoop *loop)
 
 void BreakWindow::tick()
 {
+    /* A SIGTERM/SIGINT received while the overlay is up must close it,
+     * otherwise the daemon ignores systemd stop until the timer expires. */
+    if (!gRunning)
+    {
+        close();
+        mLoop->quit();
+        return;
+    }
+
     int mins = mRemaining / 60;
     int secs = mRemaining % 60;
     mLabel->setText(QString::asprintf("%d:%02d", mins, secs));
@@ -84,12 +98,10 @@ void BreakWindow::tick()
     if (!mNotifiedReminder && mRemaining <= 300)
     {
         mNotifiedReminder = true;
-        char cmd[1024];
-        snprintf(cmd, sizeof(cmd),
-            "notify-send -t 30000 'Digital Wellbeing' '%s'",
-            _("5 minutes of break remaining"));
-        int ret = system(cmd);
-        (void)ret;
+        QProcess::startDetached(QStringLiteral("notify-send"),
+            { QStringLiteral("-t"), QStringLiteral("30000"),
+              QStringLiteral("Digital Wellbeing"),
+              QString::fromUtf8(_("5 minutes of break remaining")) });
     }
 
     if (mRemaining <= 0)

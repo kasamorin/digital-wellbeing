@@ -14,9 +14,11 @@
 #define CONFIG_DIR  ".config/digital-wellbeing"
 #define CONFIG_FILE "config.json"
 
-/* ---------- defaults ---------- */
+/* ---------- defaults & bounds ---------- */
 #define DEFAULT_WORK_MINUTES  25
 #define DEFAULT_BREAK_MINUTES 5
+#define MIN_MINUTES  1
+#define MAX_MINUTES  1440    /* 24h — also keeps the *60 multiplication safe */
 
 /* ---------- helpers ---------- */
 static char *configPath(void)
@@ -46,17 +48,30 @@ static int ensureConfigDir(void)
         return -1;
     }
 
-    char dir[1024];
-    snprintf(dir, sizeof(dir), "%s/%s", home, CONFIG_DIR);
-
-    struct stat st = {0};
-    if (stat(dir, &st) == -1)
+    /* Recursively create ~/.config/digital-wellbeing — a single mkdir()
+     * fails on fresh systems where ~/.config does not exist yet. */
+    char parent[1024];
+    int wrote = snprintf(parent, sizeof(parent), "%s/.config", home);
+    if (wrote < 0 || (size_t)wrote >= sizeof(parent))
     {
-        if (mkdir(dir, 0755) != 0 && errno != EEXIST)
-        {
-            perror("mkdir config dir");
-            return -1;
-        }
+        return -1;
+    }
+    if (mkdir(parent, 0755) != 0 && errno != EEXIST)
+    {
+        perror("mkdir ~/.config");
+        return -1;
+    }
+
+    char dir[1024];
+    wrote = snprintf(dir, sizeof(dir), "%s/%s", home, CONFIG_DIR);
+    if (wrote < 0 || (size_t)wrote >= sizeof(dir))
+    {
+        return -1;
+    }
+    if (mkdir(dir, 0755) != 0 && errno != EEXIST)
+    {
+        perror("mkdir config dir");
+        return -1;
     }
     return 0;
 }
@@ -94,7 +109,7 @@ static int writeDefaultConfig(const char *path)
 }
 
 /* ---------- parse helpers ---------- */
-static uint32_t jsonGetUint(struct json_object *obj, const char *key,
+static uint32_t jsonGetMinutes(struct json_object *obj, const char *key,
     uint32_t fallback)
 {
     struct json_object *val = json_object_object_get(obj, key);
@@ -103,9 +118,15 @@ static uint32_t jsonGetUint(struct json_object *obj, const char *key,
         return fallback;
     }
     int32_t i = json_object_get_int(val);
-    if (i < 0)
+    if (i < MIN_MINUTES)
     {
-        i = 0;
+        logMsg(_("Config '%s' out of range, using %u"), key, fallback);
+        return fallback;
+    }
+    if (i > MAX_MINUTES)
+    {
+        logMsg(_("Config '%s' out of range, using %u"), key, fallback);
+        return fallback;
     }
     return (uint32_t)i;
 }
@@ -155,9 +176,9 @@ Config *configLoad(void)
     }
 
     cfg->workMinutes =
-        jsonGetUint(root, "workMinutes", DEFAULT_WORK_MINUTES);
+        jsonGetMinutes(root, "workMinutes", DEFAULT_WORK_MINUTES);
     cfg->breakMinutes =
-        jsonGetUint(root, "breakMinutes", DEFAULT_BREAK_MINUTES);
+        jsonGetMinutes(root, "breakMinutes", DEFAULT_BREAK_MINUTES);
 
     json_object_put(root);
     free(path);

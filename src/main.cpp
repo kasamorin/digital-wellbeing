@@ -1,4 +1,5 @@
 #include <QApplication>
+#include <QProcess>
 
 #include <csignal>
 #include <cstdio>
@@ -18,7 +19,8 @@ extern "C" {
 }
 
 /* ---------- graceful shutdown ---------- */
-static volatile sig_atomic_t gRunning = 1;
+/* Shared with the break window so SIGTERM also closes an active overlay. */
+volatile sig_atomic_t gRunning = 1;
 
 static void signalHandler(int sig)
 {
@@ -80,15 +82,12 @@ static int daemonize(void)
 /* ---------- notification helper ---------- */
 static void sendNotification(const char *message, int timeoutMs)
 {
-    char cmd[1024];
-    int wrote = snprintf(cmd, sizeof(cmd),
-        "notify-send -t %d 'Digital Wellbeing' '%s'",
-        timeoutMs, message);
-    if (wrote < 0 || (size_t)wrote >= sizeof(cmd))
-    {
-        return;
-    }
-    system(cmd);  // fire-and-forget, don't block on return
+    /* No shell: avoids quoting issues when translations contain quotes,
+     * and startDetached does not block the main loop. */
+    QProcess::startDetached(QStringLiteral("notify-send"),
+        { QStringLiteral("-t"), QString::number(timeoutMs),
+          QStringLiteral("Digital Wellbeing"),
+          QString::fromUtf8(message) });
 }
 
 /* ---------- main loop ---------- */
