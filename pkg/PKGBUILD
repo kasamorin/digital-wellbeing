@@ -1,38 +1,34 @@
 # Maintainer: kasamorin
 #
-# 使用前先在项目根目录编译：
-#   make clean && make && make mo
-# 然后把二进制和 .mo 文件复制到 pkg/ 目录：
-#   cp digital-wellbeing pkg/
-#   mkdir -p pkg/locale/en/LC_MESSAGES pkg/locale/zh_CN/LC_MESSAGES
-#   cp ~/.local/share/locale/en/LC_MESSAGES/digital-wellbeing.mo pkg/locale/en/LC_MESSAGES/
-#   cp ~/.local/share/locale/zh_CN/LC_MESSAGES/digital-wellbeing.mo pkg/locale/zh_CN/LC_MESSAGES/
-# 最后在此目录运行 makepkg
+# Builds from the GitHub tag source tarball. Run from pkg/:
+#   makepkg -si
+#
+# sha256sums is SKIP because this package is not submitted to AUR; the source
+# is downloaded directly from the project's own GitHub release tag.
 
 pkgname=digital-wellbeing
 _pkgver=1.0.0
 pkgver=$_pkgver
 pkgrel=1
 pkgdesc="番茄工作法休息提醒，Qt6 全屏覆盖窗口"
-arch=('x86_64')
-url=""
+arch=('x86_64' 'aarch64')
+url="https://github.com/kasamorin/digital-wellbeing"
 license=('GPL3')
 depends=('json-c' 'qt6-base' 'libnotify')
+makedepends=('gcc' 'make' 'gettext')
 options=('!debug')
 provides=('digital-wellbeing')
 conflicts=()
 
-# 无远程源文件，直接从 PKGBUILD 所在目录安装预编译文件
-source=()
-sha256sums=()
+source=("$pkgname-$pkgver.tar.gz::$url/archive/refs/tags/v$pkgver.tar.gz")
+sha256sums=('SKIP')
+
+build() {
+  cd "$srcdir/$pkgname-$pkgver"
+  make
+}
 
 package() {
-  # $startdir 是 PKGBUILD 所在目录
-  install -Dm755 "$startdir/digital-wellbeing" \
-    "$pkgdir/usr/bin/digital-wellbeing"
-
-  install -Dm644 "$startdir/locale/en/LC_MESSAGES/digital-wellbeing.mo" \
-    "$pkgdir/usr/share/locale/en/LC_MESSAGES/digital-wellbeing.mo"
-  install -Dm644 "$startdir/locale/zh_CN/LC_MESSAGES/digital-wellbeing.mo" \
-    "$pkgdir/usr/share/locale/zh_CN/LC_MESSAGES/digital-wellbeing.mo"
+  cd "$srcdir/$pkgname-$pkgver"
+  make install PREFIX=/usr DESTDIR="$pkgdir"
 }
